@@ -2,8 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Events\MessageSent;
 use App\Models\Message;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class Chat extends Component
@@ -31,10 +33,14 @@ class Chat extends Component
         }
         else
         {
-            Message::create([
+            $message = Message::create([
                 'user_id' => Auth::id(), // Giriş yapan kullanıcının ID'si
                 'message' => $this->content,
             ]);
+
+            //$this->dispatch('messageSent', $message);
+
+            broadcast(new MessageSent($message));
 
             $this->content = '';
 
@@ -47,6 +53,13 @@ class Chat extends Component
 
     public function refresh()
     {
+        $this->allMessages();
+    }
+
+    #[On('messageSent')] // Reverb ile yeni mesaj geldiğinde tetiklenir
+    public function refreshMessages($message)
+    {
+        $this->messages->push($message);
         $this->allMessages();
     }
 
